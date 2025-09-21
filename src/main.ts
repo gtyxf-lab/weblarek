@@ -5,6 +5,7 @@ import { ProductCatalog } from './components/models/ProductCatalog';
 import './scss/styles.scss';
 import { ShopApi } from './services/ShopApi';
 import { IProduct, TPayment } from './types';
+import { API_URL } from './utils/constants';
 import { apiProducts } from './utils/data';
 
 // модель Каталог продуктов
@@ -50,19 +51,22 @@ const someUser = {
   phone: '+71234567890',
   address: 'г. Такой, ул. Такая, д. 1, кв. 5'
 }
-userModel.setInfo(someUser)
+userModel.setInfo('payment', someUser.payment);
+userModel.setInfo('email', someUser.email);
+userModel.setInfo('phone', someUser.phone);
+userModel.setInfo('address', someUser.address);
 console.log('Первый покупатель: ', userModel.getInfo());
 
-console.log(`Валидны ли данные? - ${userModel.validate()}`);
+console.log(`Валидны ли данные? - `, userModel.validate());
 
 userModel.clearInfo();
 console.log('Очистили поля и смотрим резульат:', userModel.getInfo());
 
-console.log(`Валидны ли данные? - ${userModel.validate()}`);
+console.log(`Валидны ли данные? - `, userModel.validate());
 
 //Провека работы классов апи
 console.log(`\n\nПроверка работы ShopApi`);
-const baseApi = new Api('https://larek-api.nomoreparties.co/api/weblarek');
+const baseApi = new Api(API_URL);
 const shopApi = new ShopApi(baseApi);
 const testProductModel = new ProductCatalog();
 

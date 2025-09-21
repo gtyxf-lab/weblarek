@@ -1,4 +1,4 @@
-import { IBuyer, TPayment } from "../../types";
+import { IBuyer, TByuerFields, TPayment } from "../../types";
 
 export class Buyer {
   protected payment: TPayment;
@@ -7,7 +7,7 @@ export class Buyer {
   protected address: string;
 
   constructor(buyerInfo: IBuyer = {
-    payment: 'card', // значение по умолчанию
+    payment: '' as TPayment, 
     email: '',
     phone: '',
     address: ''
@@ -18,11 +18,12 @@ export class Buyer {
     this.address = buyerInfo.address;
   }
 
-  setInfo(info: IBuyer): void {
-    this.payment = info.payment;
-    this.email = info.email;
-    this.phone = info.phone;
-    this.address = info.address;
+  setInfo(field: TByuerFields, value: string | TPayment): void {
+    if (field === 'payment' && (value === 'card' || value === 'cash')) {
+      this.payment = value;
+    } else if (field !== 'payment') {
+      this[field] = value as string;
+    }
   }
 
   getInfo(): IBuyer {
@@ -35,16 +36,38 @@ export class Buyer {
   }
 
   clearInfo(): void {
-    this.payment = 'card';
+    this.payment = '' as TPayment;
     this.email = '';
     this.phone = '';
     this.address = '';
   }
 
-  validate(): boolean {
-    return (this.payment === 'cash' || 'card') && 
-            this.email !== '' && 
-            this.phone !== '' && 
-            this.address !== '';
+  validate(): IBuyer {
+    const validateResult: IBuyer = {
+      payment: '' as TPayment,
+      email: '',
+      phone: '',
+      address: ''
+    }
+    const errorMessage: string = 'Поле должно быть заполнено';
+
+    if (this.payment !== 'cash' && this.payment !== 'card') {
+      validateResult.payment = errorMessage as TPayment;
+    }
+
+    if (this.email === '') {
+      validateResult.email = errorMessage;
+    }
+
+    if (this.phone === '') {
+      validateResult.phone = errorMessage;
+    }
+
+    if (this.address === '') {
+      validateResult.address = errorMessage;
+    }
+
+    return validateResult;
   }
+
 }

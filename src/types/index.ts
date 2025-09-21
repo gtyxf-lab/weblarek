@@ -31,3 +31,5 @@ export interface IOrderData {
   total: number;
   items: string[];
 }
+
+export type TByuerFields = 'payment' | 'email' | 'phone' | 'address';
