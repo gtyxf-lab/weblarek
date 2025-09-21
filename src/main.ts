@@ -1,7 +1,9 @@
+import { Api } from './components/base/Api';
 import { Buyer } from './components/models/Buyer';
 import { Cart } from './components/models/Cart';
 import { ProductCatalog } from './components/models/ProductCatalog';
 import './scss/styles.scss';
+import { ShopApi } from './services/ShopApi';
 import { IProduct, TPayment } from './types';
 import { apiProducts } from './utils/data';
 
@@ -57,3 +59,15 @@ userModel.clearInfo();
 console.log('Очистили поля и смотрим резульат:', userModel.getInfo());
 
 console.log(`Валидны ли данные? - ${userModel.validate()}`);
+
+//Провека работы классов апи
+console.log(`\n\nПроверка работы ShopApi`);
+const baseApi = new Api('https://larek-api.nomoreparties.co/api/weblarek');
+const shopApi = new ShopApi(baseApi);
+const testProductModel = new ProductCatalog();
+
+shopApi.getProductList()
+  .then((products: IProduct[]) => {
+    testProductModel.setProductCatalog(products);
+    console.log('Каталог товаров полученный из API:', testProductModel.getProductCatalog());
+  })
