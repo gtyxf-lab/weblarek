@@ -214,3 +214,372 @@ interface IBuyer {
 Методы:
 1. Получение списка товаров - делает GET-запрос на эндпоинт `/product/`, вовзращает массив товаров типа `IProduct[]`;
 2. Подтверждение заказа - делает POST-запрос на `/order/`, отправляет данные заказа на сервер и возвращает ответ сервера
+
+### Слой представления
+
+Слой представления (View) отвечает за отображение данных на странице и захват взаимодействий пользователя с интерфейсом. Все классы представления наследуются от базового класса `Component<T>`, где `T` — интерфейс данных для рендеринга. View не содержит бизнес-логики, а только обновляет DOM-элементы через сеттеры и генерирует события для Presenter. Каждый класс View привязан к конкретному блоку в вёрстке, использует селекторы для поиска подэлементов и реализует метод `render(data?: Partial<T>)` для обновления.
+
+Представления разделены на базовые классы (для переиспользования) и конкретные компоненты. Базовые классы — `Card` (для карточек товаров) и `Form` (для форм). Конкретные классы наследуют от них и добавляют специфичную логику.
+
+#### Класс Card
+
+Является базовым классом для всех карточек товаров, обеспечивает общую логику отображения.
+
+Класс является дженериком и принимает в переменной `T` тип данных, расширяющий `BaseCardData`.
+
+Конструктор:
+`constructor(container: HTMLElement)` - принимает ссылку на DOM-элемент (клонированный шаблон), за отображение которого отвечает класс.
+
+Поля класса:
+`title: HTMLHeadingElement` - элемент для заголовка товара;
+`category: HTMLSpanElement` - элемент для категории товара;
+`price: HTMLSpanElement` - элемент для цены товара;
+`image: HTMLImageElement `- элемент для изображения товара.
+
+Методы класса:
+`set title(value: string): void` - устанавливает текст заголовка в соответствующий DOM-элемент;
+`set category(value: string): void` - устанавливает текст категории в DOM-элемент;
+`set price(value: number | null): void` - устанавливает текст цены в DOM-элемент; если `null` — отображает "Бесценно", иначе `${value}` синапсов;
+`set image(src: string): void` - устанавливает src изображения с использованием утилиты `setImage` из базового `Component`, `alt` берётся из `title`;
+`render(data?: Partial<T>): HTMLElement` - переопределяет базовый метод. вызывает сеттеры для переданных данных и возвращает `container`.
+
+#### Клас Form
+
+Является базовым классом для всех форм, обеспечивает динамическое управление полями через конфигурацию, валидацию и сбор значений.
+
+Класс является дженериком и принимает в переменной `T` тип данных, расширяющий `FormData`.
+
+Конструктор:
+`constructor(container: HTMLElement, fieldConfig: FieldData[])` - принимает ссылку на DOM-элемент (клонированный шаблон) и массив конфигурации полей; инициализирует поля через поиск по `name` в `container`.
+
+Поля класса:
+`fields: Field[]` - массив полей формы (каждое поле — объект с name, element и required);
+`submitButton: HTMLButtonElement` - элемент кнопки submit;
+`errorsContainer: HTMLSpanElement` - элемент для отображения ошибок `(.form__errors)`;
+`values: Record<string, string>` - внутреннее хранение текущих значений полей.
+
+Методы класса:
+`setValue(name: string, value: string): void` - универсальный метод для установки значения поля по имени, обновляет DOM-элемент (`input.value` или `button.selected`) и сохраняет в `values[name]`;
+`setErrors(errors: Record<string, string>): void` - отображает все ошибки в общем контейнере как строку через запятую, очищает, если ошибок нет;
+`getValues(): Record<string, string>` - собирает и возвращает объект со всеми значениями полей из DOM и values;
+`validate(): { isValid: boolean; errors: Record<string, string> }` - проверяет все поля на required и специфичные правила, возвращает статус валидности и объект ошибок, обновляет вёрстку (`disable` кнопки, `setErrors`);
+`render(data?: Partial<T>): HTMLElement` - переопределяет базовый метод; вызывает `setValue` для `values` из `data`, `setErrors` для `errors`, и `validate()`; возвращает `container`.
+
+##### Заголовок (Header)
+
+Наследуется от `Component<HeaderData>`. Отвечает за отображение счётчика корзины в шапке страницы.
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит элементы (`кнопка: .header__basket`, счётчик: `.header__basket-counter`).
+
+Поля:
+`cartButton: HTMLButtonElement` - кнопка корзины;
+`cartItemsCount: HTMLElement` - элемент счётчика товаров.
+
+Методы:
+`set counter(value: number): void` - устанавливает текст счётчика в DOM-элемент;
+`render(data?: Partial<HeaderData>): HTMLElement` - вызывает set counter из data; возвращает container.
+
+##### Галерея (Gallery)
+
+Наследуется от `Component<GalleryData>`. Отвечает за отображение списка карточек каталога в основном контенте страницы.
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит элемент (`catalogElement: .gallery`).
+
+Поля:
+`catalogElement: HTMLElement` - контейнер для вставки карточек в каталог.
+
+Методы:
+
+`set catalog(items: HTMLElement[]): void` - очищает контейнер и добавляет все переданные HTMLElement (карточки) в DOM;
+`render(data?: Partial<GalleryData>): HTMLElement` - вызывает set catalog из data; возвращает container.
+
+##### Модальное окно (Modal)
+
+Наследуется от `Component<ContentData>`. Отвечает за управление общим модальным окном (вставка контента, закрытие).
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит элементы `(modalContent: .modal__content, closeButton: .modal__close)`.
+
+Поля:
+`modalContent: HTMLElement` - контейнер для вставки динамического контента (карточки, формы);
+`closeButton: HTMLButtonElement` - кнопка закрытия модалки.
+
+Методы:
+
+`set content(content: HTMLElement): void` - очищает `modalContent` и вставляет переданный элемент;
+`render(data?: Partial<ContentData>): HTMLElement` - вызывает set content из data; возвращает container.
+
+#### Интерфейсы представления
+```ts
+interface HeaderData {
+  counter: number;
+}
+```
+Интерфейс данных для заголовка. Предназначен для типизации счётчика корзины.
+
+Поля:
+`counter` - число, значение счётчика товаров в корзине.
+
+```ts
+interface GalleryData {
+  catalog: HTMLElement[];
+}
+```
+Интерфейс данных для галереи товаров. Предназначен для типизации массива карточек каталога.
+
+Поля:
+`catalog` - массив HTMLElement, готовые DOM-элементы карточек для вставки в галерею.
+
+```ts
+interface ContentData {
+  data: HTMLElement;
+}
+```
+Интерфейс данных для модального контента. Предназначен для типизации содержимого модалки.
+
+Поля:
+`data` - HTMLElement, элемент для вставки в модалку (например, карточка или форма).
+
+```ts
+interface BaseCardData {
+  title: string;
+  category: string;
+  price: number | null;
+  image: string;
+}
+```
+
+Основной интерфейс для данных карточек товаров. Предназначен для типизации общих полей, используемых в базовом классе `Card`.
+
+Поля:
+`title` - строка, название товара;
+`category` - строка, категория товара;
+`price` - число или `null` для "Бесценно";
+`image` - строка, путь к изображению.
+
+```ts
+interface FieldData {
+  name: string;
+  type: 'input' | 'radio' | 'button' | 'submit';
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+}
+```
+
+Интерфейс конфигурации для одного поля формы. Предназначен для передачи в конструктор `Form` как массив.
+
+Поля:
+`name` - строка, уникальный ключ поля (соответствует `name` в HTML);
+`type` - тип DOM-элемента;
+`label` - строка, текст лейбла;
+`placeholder` - опциональная строка, подсказка для input;
+`required` - опциональный boolean.
+
+```ts
+interface Field {
+  name: string;
+  element: HTMLElement;
+  required: boolean;
+}
+```
+
+Внутренний интерфейс для экземпляра поля в классе `Form`. Создаётся на основе `FieldData`.
+
+Поля:
+`name` - строка, ключ поля;
+`element` - `HTMLElement`, ссылка на DOM-элемент (input, button);
+`required` - boolean, флаг обязательности.
+
+```ts
+interface FormData {
+  fields: FieldData[];
+  values: Record<string, string>;
+  errors?: Record<string, string>;
+}
+```
+
+Основной интерфейс для данных форм. Предназначен для типизации аргументов render в `Form<T>`.
+Поля:
+`fields` - массив `FieldData`, конфигурация полей;
+`values` - объект с ключами-именами полей и строковыми значениями;
+`errors` - опциональный объект с ошибками валидации (ключ — имя поля, значение — текст ошибки).
+
+#### Представления карточек товаров
+
+##### Каталог карточек (CatalogCard)
+
+Наследуется от `Card<CatalogCardData>`. Отвечает за отображение карточки товара в галерее (шаблон `#card-catalog`).
+Интерфейс данных:
+```ts
+interface CatalogCardData extends BaseCardData {}
+```
+
+Наследует все поля от BaseCardData; дополнительных полей нет.
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; специфичной логики нет.
+
+Поля:
+Наследует поля от `Card (title, category, price, image)`.
+
+Методы:
+Наследует все методы от `Card (set title, set price и т.д.)`.
+
+##### Детальная карточка (DetailedCard)
+
+Наследуется от `Card<DetailedCardData>`. Отвечает за отображение подробной карточки товара в модалке (шаблон #card-preview).
+
+Интерфейс данных:
+```ts
+interface DetailedCardData extends BaseCardData {
+  description: string;
+  addButtonText?: string;
+}
+```
+
+Наследует `BaseCardData`; добавляет `description` для текста описания и опциональный текст кнопки "В корзину".
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит дополнительные элементы `(description: .card__text, addButton: .card__button)`.
+
+Поля:
+Наследует от `Card`; добавляет:
+`description: HTMLParagraphElement` - элемент для описания;
+`addButton: HTMLButtonElement` - элемент кнопки "В корзину".
+
+Методы:
+Наследует от `Card`; добавляет:
+`set description(value: string): void` - устанавливает текст описания в DOM-элемент;
+`set addButtonText(value: string): void` - устанавливает текст кнопки (по умолчанию "В корзину");
+`render(data?: Partial<DetailedCardData>): HTMLElement` - вызывает `super.render(data)`; затем сеттеры для `description` и `addButtonText`.
+
+##### Карточка в корзине (CartCard)
+
+Наследуется от `Card<CartCardData>`. Отвечает за отображение карточки товара в списке корзины (шаблон #card-basket).
+
+Интерфейс данных:
+```ts
+interface CartCardData extends BaseCardData {
+  index: number;
+  deleteButtonText?: string;
+}
+```
+
+Наследует `BaseCardData`; добавляет `index` для нумерации и опциональный текст кнопки удаления.
+
+Конструктор:
+
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит дополнительные элементы `(index: .basket__item-index, deleteButton: .basket__item-delete)`.
+
+Поля:
+Наследует от C`ard`; добавляет:
+`index: HTMLSpanElement` - элемент для номера в списке;
+`deleteButton: HTMLButtonElement` - элемент кнопки удаления.
+
+Методы:
+Наследует от `Card`; добавляет:
+`set index(value: number): void` - устанавливает текст номера в DOM-элемент;
+`render(data?: Partial<CartCardData>): HTMLElement` - вызывает `super.render(data)`; затем сеттеры для index и deleteButtonText.
+
+#### Представления корзины
+
+##### Корзина (Cart)
+
+Наследуется от `Component<CartData>`. Отвечает за отображение модалки корзины (шаблон #basket), включая список карточек и общую цену.
+
+Интерфейс данных:
+```ts
+interface CartData {
+  totalPrice: number;
+  items: CartItemData[];
+}
+```
+
+`totalPrice` - общая сумма; `items` - массив данных для карточек (`type CartItemData = CartCardData`).
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит элементы (`cartItems: .basket__list`, `confirmButton: .basket__button`, `price: .basket__price`); устанавливает статичный заголовок "Корзина".
+Поля:
+`cartItems: HTMLUListElement` - список ul для карточек;
+`confirmButton: HTMLButtonElement` - кнопка "Оплатить";
+`price: HTMLSpanElement` - элемент общей цены.
+
+Методы:
+`set price(value: number): void` - устанавливает текст цены в DOM-элемент (`${value}` синапсов);
+`set cartItems(items: CartItemData[]): void` - очищает ul; для каждого item клонирует шаблон `#card-basket`, создаёт `CartCard`, вызывает render с index, добавляет в ul; если пусто — добавляет сообщение "Корзина пуста"; disable кнопки, если `items.length === 0`;
+`render(data?: Partial<CartData>): HTMLElement` - вызывает сеттеры для totalPrice и items; возвращает container.\
+
+#### Представления форм
+
+##### Форма заказа (OrderForm)
+
+Наследуется от `Form<OrderFormData>`. Отвечает за форму выбора оплаты и адреса (шаблон `#order`).
+
+Интерфейс данных:
+```ts
+interface OrderFormData extends FormData {
+  payment?: TPayment;
+}
+```
+
+Наследует `FormData`; добавляет типизированный payment для radio.
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container, orderConfig)`; где `orderConfig` — статичный массив `FieldData` для payment (radio) и address (input).
+
+Поля:
+Наследует от `Form (fields, submitButton, errorsContainer)`.
+
+Методы:
+Наследует от `Form (setValue, validate и т.д.)`; добавляет:
+`setPayment(method: TPayment): void` - обновляет вид radio-кнопок (`class 'selected'`), вызывает `setValue('payment', method)`;
+`render(data?: Partial<OrderFormData>): HTMLElement` - наследует от `Form`.
+
+##### Форма контактов (ContactsForm)
+
+Наследуется от `Form<ContactsFormData>`. Отвечает за форму ввода email и телефона (шаблон `#contacts`).
+
+Интерфейс данных:
+```ts
+interface ContactsFormData extends FormData {}
+```
+
+Наследует `FormData`; дополнительных полей нет.
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container, contactsConfig)`; где `contactsConfig` — статичный массив `FieldData` для email и phone (input).
+
+Поля:
+Наследует от `Form (fields, submitButton, errorsContainer)`.
+
+Методы:
+Наследует от Form `(setValue, validate и т.д.)`; специфичных методов нет.
+
+#### Представление подтверждения заказа (Success)
+
+Наследуется от `Component<SuccessData>`. Отвечает за блок подтверждения успешного заказа в модалке (шаблон `#success`).
+
+Интерфейс данных:
+```ts
+interface SuccessData {
+  total: number;
+}
+```
+
+`total` - сумма списания для текста "Списано X синапсов".
+
+Конструктор:
+`constructor(container: HTMLElement)` - вызывает `super(container)`; находит элементы (`title: .order-success__title`, `description: .order-success__description`, `closeButton: .order-success__close`).
+
+Поля:
+`title: HTMLHeadingElement` - заголовок "Заказ оформлен";
+`description: HTMLParagraphElement` - описание с суммой;
+`closeButton: HTMLButtonElement` - кнопка "За новыми покупками!".
+
+Методы:
+`set total(value: number): void` - устанавливает текст описания (Списано `${value}` синапсов);
+`set titleText(value: string): void` - устанавливает текст заголовка (опционально);
+`render(data?: Partial<SuccessData>): HTMLElement` - вызывает set total из data; возвращает container.
