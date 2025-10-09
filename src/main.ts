@@ -5,6 +5,7 @@ import { Cart } from './components/models/Cart';
 import { ProductCatalog } from './components/models/ProductCatalog';
 import { Gallery } from './components/view/Gallery';
 import { Header } from './components/view/Header';
+import { Modal } from './components/view/Modal';
 import './scss/styles.scss';
 import { ShopApi } from './services/ShopApi';
 import { IProduct, TPayment } from './types';
@@ -108,3 +109,17 @@ header.counter = 3;
 events.on('cart:open', () => {
   console.log('Корзина открыта');
 })
+
+const modalContainer = document.querySelector('.modal') as HTMLElement;
+
+const modal = new Modal(events, modalContainer);
+
+const testContent = document.createElement('div');
+testContent.textContent = 'Тестовый контент модалки';
+testContent.style.border = '1px solid white';
+
+modal.content = testContent;
+// modal.render({data: testContent});
+
+// document.body.appendChild(modalContainer);
+events.on('modal:close', () => {console.log('Закрыть модалку');})
