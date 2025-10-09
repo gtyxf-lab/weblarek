@@ -1,7 +1,10 @@
 import { Api } from './components/base/Api';
+import { EventEmitter } from './components/base/Events';
 import { Buyer } from './components/models/Buyer';
 import { Cart } from './components/models/Cart';
 import { ProductCatalog } from './components/models/ProductCatalog';
+import { Gallery } from './components/view/Gallery';
+import { Header } from './components/view/Header';
 import './scss/styles.scss';
 import { ShopApi } from './services/ShopApi';
 import { IProduct, TPayment } from './types';
@@ -75,3 +78,33 @@ shopApi.getProductList()
     testProductModel.setProductCatalog(products);
     console.log('Каталог товаров полученный из API:', testProductModel.getProductCatalog());
   })
+
+const events = new EventEmitter();
+
+const galleryContainer = document.querySelector('.gallery') as HTMLElement;
+const gallery = new Gallery(events, galleryContainer);
+
+const testItems: HTMLElement[] = [
+  document.createElement('div'),
+  document.createElement('div')
+];
+
+testItems[0].classList.add('card');
+testItems[0].dataset.id = '1';
+testItems[0].textContent = 'Карточка 1';
+
+testItems[1].classList.add('card');
+testItems[1].dataset.id = '2';
+testItems[1].textContent = 'Карточка 2';
+
+gallery.render({ catalog: testItems });
+events.on('gallery:select', (data: IProduct) => {
+  console.log(`Клик на карточку с id ${data.id}`);
+})
+
+const headerElement = document.querySelector('.header') as HTMLElement;
+const header = new Header(events, headerElement);
+header.counter = 3;
+events.on('cart:open', () => {
+  console.log('Корзина открыта');
+})
