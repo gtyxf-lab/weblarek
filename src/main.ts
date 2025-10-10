@@ -6,6 +6,7 @@ import { ProductCatalog } from './components/models/ProductCatalog';
 import { Gallery } from './components/view/Gallery';
 import { Header } from './components/view/Header';
 import { Modal } from './components/view/Modal';
+import { Success } from './components/view/Success';
 import './scss/styles.scss';
 import { ShopApi } from './services/ShopApi';
 import { IProduct, TPayment } from './types';
@@ -123,3 +124,12 @@ modal.content = testContent;
 
 // document.body.appendChild(modalContainer);
 events.on('modal:close', () => {console.log('Закрыть модалку');})
+
+const template = document.querySelector('#success') as HTMLTemplateElement;
+const cloned = template.content.firstElementChild?.cloneNode(true) as HTMLElement;
+console.log(cloned);
+const successView = new Success(events, cloned);
+
+successView.render({ total: 500 });
+document.querySelector('.modal__content')?.appendChild(cloned);
+events.on('success:confirm', () => {console.log('Закрыть модалку');})
