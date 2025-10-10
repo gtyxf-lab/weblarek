@@ -100,9 +100,9 @@ testItems[1].dataset.id = '2';
 testItems[1].textContent = 'Карточка 2';
 
 gallery.render({ catalog: testItems });
-events.on('gallery:select', (data: IProduct) => {
-  console.log(`Клик на карточку с id ${data.id}`);
-})
+// events.on('catalog:select', (data: IProduct) => {
+//   console.log(`Клик на карточку с id ${data.id}`);
+// })
 
 const headerElement = document.querySelector('.header') as HTMLElement;
 const header = new Header(events, headerElement);
