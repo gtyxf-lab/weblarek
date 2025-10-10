@@ -89,3 +89,12 @@ export class EventEmitter implements IEvents {
     }
 }
 
+export function handleCardClick(event: MouseEvent, events: IEvents, eventName: string) {
+    const target = event.target as Element;
+    const cardElement = target.closest('.card');
+    if (cardElement) {
+        const card = cardElement as HTMLElement;
+        const id = card.dataset.id;
+        events.emit(eventName, {id});
+    }
+}

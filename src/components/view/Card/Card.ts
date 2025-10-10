@@ -1,21 +1,21 @@
 import { ensureElement } from "../../../utils/utils";
 import { Component } from "../../base/Component";
-import { IEvents } from "../../base/Events";
 
-interface IBaseCard {
+export interface ICard {
+  id: string;
   title: string;
   category: string;
   price: number | null;
   image: string;
 }
 
-export abstract class Card<T extends IBaseCard> extends Component<T> {
+export abstract class Card<T extends ICard> extends Component<T> {
   protected cardTitle: HTMLHeadingElement;
   protected cardCategory: HTMLSpanElement;
   protected cardPrice: HTMLSpanElement;
   protected cardImage: HTMLImageElement;
 
-  constructor(protected events: IEvents, container: HTMLElement) {
+  constructor(container: HTMLElement) {
     super(container);
 
     this.cardTitle = ensureElement<HTMLHeadingElement>('.card__title', this.container);
@@ -24,18 +24,22 @@ export abstract class Card<T extends IBaseCard> extends Component<T> {
     this.cardImage = ensureElement<HTMLImageElement>('.card__image', this.container);
   }
 
+  set id(value: string) {
+    this.container.dataset.id = value;
+  }
+
   set title(value: string) {
-    this.cardTitle.textContent = String(value);
+    this.cardTitle.textContent = value;
   }
 
   set category(value: string) {
-    this.cardCategory.textContent = String(value);
+    this.cardCategory.textContent = value;
   }
 
   set price(value: number | null) {
-    if (typeof value === 'number') {
+    if (value !== null) {
       this.cardPrice.textContent = `${value} синапсов`;
-    } else if (value === null) {
+    } else {
       this.cardPrice.textContent = 'Бесценно';
     }
   }
@@ -46,6 +50,7 @@ export abstract class Card<T extends IBaseCard> extends Component<T> {
   }
 
   render(data?: Partial<T>): HTMLElement {
+    if (data?.id) {this.id = data.id;}
     if (data?.title) {this.title = data.title;}
     if (data?.category) {this.category = data.category;}
     if (data?.price) {this.price = data.price;}

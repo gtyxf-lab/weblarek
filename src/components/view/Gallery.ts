@@ -1,5 +1,6 @@
+
 import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { handleCardClick, IEvents } from "../base/Events";
 
 interface IGallery {
   catalog: HTMLElement[];
@@ -12,15 +13,7 @@ export class Gallery extends Component<IGallery> {
     super(container);
 
     this.catalogElement = container;
-    this.catalogElement.addEventListener('click', (e) => {
-      const target = e.target as Element;
-      const cardElement = target.closest('.card');
-      if (cardElement) {
-        const card = cardElement as HTMLElement;
-        const id = card.dataset.id;
-        this.events.emit('gallery:select', {id});
-      }
-    })
+    this.catalogElement.addEventListener('click', e => handleCardClick(e, this.events, 'gallery:select'));
   }
 
   set catalog(items: HTMLElement[]) {
