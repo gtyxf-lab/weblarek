@@ -47,8 +47,10 @@ export abstract class Card<T extends ICard> extends Component<T> {
   }
 
   set image(src: string) {
-    const alt = this.cardTitle.textContent || 'Изображение товара';
-    this.setImage(this.cardImage, src, alt);
+    if (this.cardImage) {
+      const alt = this.cardTitle.textContent || 'Изображение товара';
+      this.setImage(this.cardImage, src, alt);
+    }
   }
 
   render(data?: Partial<T>): HTMLElement {
