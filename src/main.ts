@@ -3,6 +3,7 @@ import { EventEmitter } from './components/base/Events';
 import { Buyer } from './components/models/Buyer';
 import { Cart } from './components/models/Cart';
 import { ProductCatalog } from './components/models/ProductCatalog';
+import { Basket } from './components/view/Basket';
 import { Gallery } from './components/view/Gallery';
 import { Header } from './components/view/Header';
 import { Modal } from './components/view/Modal';
@@ -133,3 +134,31 @@ const successView = new Success(events, cloned);
 successView.render({ total: 500 });
 document.querySelector('.modal__content')?.appendChild(cloned);
 events.on('success:confirm', () => {console.log('Закрыть модалку');})
+
+function basketTest() {
+  console.log('=== Тест Basket ===');
+  const basketTemplate = document.querySelector('#basket') as HTMLTemplateElement;
+  const cloned = basketTemplate.content.firstElementChild.cloneNode(true) as HTMLElement;
+  const basket = new Basket(events, cloned);
+
+  const testItems = [
+    { id: '1', title: 'Товар 1', price: 1000, category: 'другое', image: './img.svg' },
+    { id: '2', title: 'Товар 2', price: 2000, category: 'софт', image: './img2.svg' }
+  ];
+
+  basket.render({ totalPrice: 3000, items: testItems }); // 2 карточки, индексы 1/2
+
+  console.log('Items count:', basket.basketItemsList.children.length); // 2
+  console.log('Price:', basket.priceElement.textContent); // "3000 синапсов"
+
+  events.on('cart:deleteCard', (data) => console.log('Удалено:', data.id));
+  basket.basketItemsList.children[0].querySelector('.basket__item-delete')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); // "Удалено: 1"
+
+  document.body.appendChild(cloned); // Увидишь корзину
+
+  basket.render({ totalPrice: 0, items: [] }); // Пустая корзина
+  console.log('Items count:', basket.basketItemsList.children.length); // 1 (empty)
+  console.log('Empty text:', basket.basketItemsList.children[0].textContent); // "В корзине пока пусто..."
+}
+
+basketTest()

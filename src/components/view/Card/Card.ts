@@ -11,17 +11,17 @@ export interface ICard {
 
 export abstract class Card<T extends ICard> extends Component<T> {
   protected cardTitle: HTMLHeadingElement;
-  protected cardCategory: HTMLSpanElement;
+  protected cardCategory?: HTMLSpanElement;
   protected cardPrice: HTMLSpanElement;
-  protected cardImage: HTMLImageElement;
+  protected cardImage?: HTMLImageElement;
 
   constructor(container: HTMLElement) {
     super(container);
 
     this.cardTitle = ensureElement<HTMLHeadingElement>('.card__title', this.container);
-    this.cardCategory = ensureElement<HTMLSpanElement>('.card__category', this.container);
+    this.cardCategory = this.container.querySelector('.card__category') as HTMLSpanElement | undefined;
     this.cardPrice = ensureElement<HTMLSpanElement>('.card__price', this.container);
-    this.cardImage = ensureElement<HTMLImageElement>('.card__image', this.container);
+    this.cardImage = this.container.querySelector('card__image') as HTMLImageElement | undefined;
   }
 
   set id(value: string) {
@@ -33,7 +33,9 @@ export abstract class Card<T extends ICard> extends Component<T> {
   }
 
   set category(value: string) {
-    this.cardCategory.textContent = value;
+    if (this.cardCategory) {
+      this.cardCategory.textContent = value;
+    }
   }
 
   set price(value: number | null) {
