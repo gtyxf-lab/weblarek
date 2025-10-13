@@ -102,14 +102,6 @@ export abstract class Form<T extends IForm> extends Component<T> {
           isValid = false;
         }
       }
-      
-      if (field.element.tagName === 'INPUT' && field.element.getAttribute('type') === 'radio') {
-        const radios = this.container.querySelectorAll(`input[name="${field.name}"]:checked`);
-        if (field.required && radios.length === 0) {
-          errors[field.name] = `Поле "${field.name}" обязательно`;
-          isValid = false;
-        }
-      }
     })
 
     this.setErrors(errors);
