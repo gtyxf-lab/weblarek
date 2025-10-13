@@ -1,5 +1,5 @@
 import { ensureElement } from "../../../utils/utils";
-import { handleCardClick, IEvents } from "../../base/Events";
+import { IEvents } from "../../base/Events";
 import { Card, ICard } from "./Card";
 
 export interface ICardInBasket extends ICard {
@@ -10,25 +10,26 @@ export class BasketCard extends Card<ICardInBasket> {
   protected indexElement: HTMLSpanElement;
   protected deleteButton: HTMLButtonElement;
 
-  constructor(protected events: IEvents, container: HTMLElement) {
-    super(container);
+  constructor(protected events: IEvents, container: HTMLElement, categoryMap: Record<string, string>) {
+    super(container, categoryMap);
 
     this.indexElement = ensureElement<HTMLSpanElement>('.basket__item-index', this.container);
     this.deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', this.container);
-    
-    this.deleteButton.addEventListener('click', e => handleCardClick(e, this.events, 'basket:deleteCard'));
+
+    this.deleteButton.addEventListener('click', () => {
+      this.events.emit('basket:deleteCard', { id: this.container.dataset.id });
+    });
   }
 
   set index(value: number) {
-    this.indexElement.textContent = value.toString();
+    this.indexElement.textContent = String(value);
   }
 
   render(data?: Partial<ICardInBasket>): HTMLElement {
-    super.render(data);
-    if (data?.index !== undefined) {
-      this.index = data.index;
+    if (data) {
+      super.render(data);
+      if (data.index !== undefined) this.index = data.index;
     }
-
     return this.container;
   }
 }

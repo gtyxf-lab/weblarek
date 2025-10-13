@@ -95,6 +95,8 @@ export function handleCardClick(event: MouseEvent, events: IEvents, eventName: s
     if (cardElement) {
         const card = cardElement as HTMLElement;
         const id = card.dataset.id;
-        events.emit(eventName, {id});
+        const title = card.querySelector('.card__title')?.textContent;
+        const price = card.querySelector('.card__price')?.textContent;
+        events.emit(eventName, { id, title, price });
     }
 }

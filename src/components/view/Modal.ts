@@ -17,18 +17,19 @@ export class Modal extends Component<IContent> {
     this.closeButton = ensureElement('.modal__close', this.container) as HTMLButtonElement;
     this.closeButton.addEventListener('click', () => {
       this.events.emit('modal:close');
-    })
+    });
   }
 
   set content(content: HTMLElement) {
-    this.modalContent.innerHTML = '';
-    this.modalContent.appendChild(content);
+    this.modalContent.replaceChildren(content);
+  }
+
+  set isOpen(value: boolean) {
+    this.container.classList.toggle('modal_active', value);
   }
 
   render(data?: Partial<IContent>): HTMLElement {
-  if (data?.data) {
-    this.content = data.data;
+    if (data && data.data) this.content = data.data;
+    return this.container;
   }
-  return this.container;
-}
 }

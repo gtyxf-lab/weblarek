@@ -21,7 +21,7 @@ export abstract class Form<T extends IForm> extends Component<T> {
   protected errorsContainer: HTMLSpanElement;
 
   constructor(protected events: IEvents, container: HTMLElement) {
-    super(container)
+    super(container);
 
     this.submitButton = ensureElement<HTMLButtonElement>('.button[type=submit]', this.container);
     this.errorsContainer = ensureElement<HTMLSpanElement>('.form__errors', this.container);
@@ -31,15 +31,15 @@ export abstract class Form<T extends IForm> extends Component<T> {
       if (target.name) {
         this.events.emit('form:input', {
           field: target.name,
-          value: target.value
-        })
+          value: target.value,
+        });
       }
     });
 
     this.container.addEventListener('submit', (e: Event) => {
       e.preventDefault();
       this.events.emit('form:submit');
-    })
+    });
   }
 
   set errors(errors: string[]) {
@@ -51,13 +51,10 @@ export abstract class Form<T extends IForm> extends Component<T> {
   }
 
   render(data?: Partial<T>): HTMLElement {
-    if (data?.errors) {
-      this.errors = data.errors;
+    if (data) {
+      if (data.errors) this.errors = data.errors;
+      if (data.valid !== undefined) this.valid = data.valid;
     }
-    if (data?.valid !== undefined) {
-      this.valid = data.valid;
-    }
-
     return this.container;
   }
 }

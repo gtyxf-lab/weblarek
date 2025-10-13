@@ -24,32 +24,41 @@ export abstract class Card<T extends ICard> extends Component<T> {
     this.cardImage = this.container.querySelector('.card__image') as HTMLImageElement | undefined;
   }
 
-  render(data?: Partial<T>): HTMLElement {
-    if (!data) {
-      return this.container;
-    }
+  set id(value: string) {
+    this.container.dataset.id = value;
+  }
 
-    if (data.id !== undefined) this.container.dataset.id = data.id;
-    if (data.title) this.cardTitle.textContent = data.title;
+  set title(value: string) {
+    this.cardTitle.textContent = value;
+  }
 
-    if (data.category && this.cardCategory) {
-      this.cardCategory.textContent = data.category;
-
-      Object.values(this.categoryMap).forEach(cls => {
-        this.cardCategory?.classList.remove(cls)
-      });
-      const modifier = this.categoryMap[data.category];
+  set category(value: string) {
+    if (this.cardCategory) {
+      this.cardCategory.textContent = value;
+      Object.values(this.categoryMap).forEach(cls => this.cardCategory?.classList.remove(cls));
+      const modifier = this.categoryMap[value];
       if (modifier) this.cardCategory.classList.add(modifier);
     }
+  }
 
-    if (data.price !== undefined) {
-      this.cardPrice.textContent = data.price === null ? 'Бесценно' : `${data.price} синапсов`;
+  set price(value: number | null) {
+    this.cardPrice.textContent = value === null ? 'Бесценно' : `${value} синапсов`;
+  }
+
+  set image({ src, alt }: { src: string; alt?: string }) {
+    if (this.cardImage) {
+      this.setImage(this.cardImage, src, alt);
     }
+  }
 
-    if (data.image && this.cardImage) {
-      this.setImage(this.cardImage, data.image, data.title || 'Изображение товара');
-    } 
-
+  render(data?: Partial<T>): HTMLElement {
+    if (data) {
+      if (data.id) this.id = data.id;
+      if (data.title) this.title = data.title;
+      if (data.category) this.category = data.category;
+      if (data.price !== undefined) this.price = data.price;
+      if (data.image) this.image = { src: data.image, alt: data.title };
+    }
     return this.container;
   }
 }
