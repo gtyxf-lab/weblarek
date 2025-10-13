@@ -1,4 +1,5 @@
 import { IBuyer, TByuerFields, TPayment } from "../../types";
+import { IEvents } from "../base/Events";
 
 export class Buyer {
   protected payment: TPayment;
@@ -6,7 +7,7 @@ export class Buyer {
   protected phone: string;
   protected address: string;
 
-  constructor(buyerInfo: IBuyer = {
+  constructor(protected events: IEvents, buyerInfo: IBuyer = {
     payment: '' as TPayment, 
     email: '',
     phone: '',
@@ -24,6 +25,7 @@ export class Buyer {
     } else if (field !== 'payment') {
       this[field] = value as string;
     }
+    this.events.emit('buyer:updated', this.getInfo())
   }
 
   getInfo(): IBuyer {
@@ -40,6 +42,7 @@ export class Buyer {
     this.email = '';
     this.phone = '';
     this.address = '';
+    this.events.emit('buyer:updated', this.getInfo())
   }
 
   validate(): IBuyer {
