@@ -1,3 +1,4 @@
+import { CDN_URL } from "../../../utils/constants";
 import { ensureElement } from "../../../utils/utils";
 import { Component } from "../../base/Component";
 
@@ -45,9 +46,9 @@ export abstract class Card<T extends ICard> extends Component<T> {
     this.cardPrice.textContent = value === null ? 'Бесценно' : `${value} синапсов`;
   }
 
-  set image({ src, alt }: { src: string; alt?: string }) {
+  set image(src: string) {
     if (this.cardImage) {
-      this.setImage(this.cardImage, src, alt);
+      this.setImage(this.cardImage, `${CDN_URL}${src.slice(0, -3) + 'png'}`, this.cardTitle.textContent);
     }
   }
 
@@ -57,7 +58,7 @@ export abstract class Card<T extends ICard> extends Component<T> {
       if (data.title) this.title = data.title;
       if (data.category) this.category = data.category;
       if (data.price !== undefined) this.price = data.price;
-      if (data.image) this.image = { src: data.image, alt: data.title };
+      if (data.image) this.image = data.image;
     }
     return this.container;
   }

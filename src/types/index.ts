@@ -14,6 +14,11 @@ export interface IProduct {
   price: number | null;
 }
 
+export interface IApiProductList {
+  total: number,
+  items: IProduct[]
+}
+
 export type TPayment = 'card' | 'cash';
 
 export interface IBuyer {

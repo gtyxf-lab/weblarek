@@ -1,4 +1,4 @@
-import { IApi, IOrderData, IProduct } from "../types";
+import { IApi, IApiProductList, IOrderData } from "../types";
 
 export class ShopApi {
   protected api: IApi;
@@ -7,10 +7,10 @@ export class ShopApi {
     this.api = api;
   }
 
-  async getProductList(): Promise<IProduct[]> {
+  async getProductList(): Promise<IApiProductList> {
     try {
       const response = await this.api.get(`/product/`);
-      return response as IProduct[];
+      return response as IApiProductList;
     } catch (error) {
       console.error(`Ошибка при получении товаров: ${error}`);
       throw error;
