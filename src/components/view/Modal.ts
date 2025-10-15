@@ -15,9 +15,15 @@ export class Modal extends Component<IContent> {
 
     this.modalContent = ensureElement('.modal__content', this.container);
     this.closeButton = ensureElement('.modal__close', this.container) as HTMLButtonElement;
+    
     this.closeButton.addEventListener('click', () => {
       this.events.emit('modal:close');
     });
+    this.container.addEventListener('click', (e: MouseEvent) => {
+      if (e.target === this.container) {
+        this.events.emit('modal:close');
+      }
+    })
   }
 
   set content(content: HTMLElement) {
