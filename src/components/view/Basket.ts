@@ -1,10 +1,10 @@
 import { categoryMap } from "../../utils/constants";
-import { cloneTemplate, ensureElement } from "../../utils/utils";
+import { cloneTemplate, createElement, ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
 import { BasketCard, ICardInBasket } from "./Card/BasketCard";
 
-interface IBasket {
+export interface IBasket {
   totalPrice: number;
   items: ICardInBasket[];
 }
@@ -36,10 +36,10 @@ export class Basket extends Component<IBasket> {
   set basketItems(items: ICardInBasket[]) {
     this.basketItemsList.innerHTML = '';
     if (items.length === 0) {
-      const emptyItem = document.createElement('li');
-      emptyItem.textContent = 'В корзине пока пусто...';
-      emptyItem.classList.add('basket__empty');
-      this.basketItemsList.appendChild(emptyItem);
+      const emptyText = createElement('p');
+      emptyText.textContent = 'Корзина пуста'
+      emptyText.style.opacity = '.3';
+      this.basketItemsList.appendChild(emptyText);
       this.confirmButtonDisabled = true;
       return;
     }
