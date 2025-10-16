@@ -48,7 +48,7 @@ export abstract class Card<T extends ICard> extends Component<T> {
 
   set image(src: string) {
     if (this.cardImage) {
-      this.setImage(this.cardImage, `${CDN_URL}${src.slice(0, -3) + 'png'}`, this.cardTitle.textContent);
+      this.setImage(this.cardImage, `${CDN_URL}${src.slice(0, -3) + 'png'}`, this.cardTitle.textContent || 'Изображение товара');
     }
   }
 
