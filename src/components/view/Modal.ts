@@ -12,7 +12,6 @@ export class Modal extends Component<IContent> {
 
   constructor(protected events: IEvents, container: HTMLElement) {
     super(container);
-
     this.modalContent = ensureElement('.modal__content', this.container);
     this.closeButton = ensureElement('.modal__close', this.container) as HTMLButtonElement;
     
@@ -23,7 +22,7 @@ export class Modal extends Component<IContent> {
       if (e.target === this.container) {
         this.events.emit('modal:close');
       }
-    })
+    });
   }
 
   set content(content: HTMLElement) {
@@ -35,7 +34,9 @@ export class Modal extends Component<IContent> {
   }
 
   render(data?: Partial<IContent>): HTMLElement {
-    if (data && data.data) this.content = data.data;
+    if (data && data.data) {
+      this.content = data.data;
+    }
     return this.container;
   }
 }

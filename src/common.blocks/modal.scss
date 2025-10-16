@@ -5,7 +5,9 @@
   @include mixins.sublayer;
   // height: max-content;
   position: fixed;
-  display: none;
+  display: flex;
+  opacity: 0;
+  visibility: hidden;
   justify-content: center;
   background-color: $overlayBackground;
   z-index: 100;
@@ -13,8 +15,12 @@
   padding-bottom: 5vh;
   box-sizing: border-box;
 
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+
   &_active {
     display: flex;
+    opacity: 1;
+    visibility: visible;
   }
 
   &__container {

@@ -1,19 +1,21 @@
+import { TByuerFields } from "../../../types";
 import { ensureElement } from "../../../utils/utils";
 import { Component } from "../../base/Component";
 import { IEvents } from "../../base/Events";
 
 export interface IFieldData {
   name: string;
-  type: 'radio' | 'button' | 'submit' | 'email' | 'tel' | 'text',
-  label: string,
+  type: 'radio' | 'button' | 'submit' | 'email' | 'tel' | 'text';
+  label: string;
   required?: boolean;
-  placeholder?: string,
+  placeholder?: string;
   value?: string;
 }
 
 export interface IForm {
-  errors?: string[],
+  errors?: string[];
   valid: boolean;
+  fieldErrors?: Partial<Record<TByuerFields, string>>;
 }
 
 export abstract class Form<T extends IForm> extends Component<T> {
@@ -23,16 +25,17 @@ export abstract class Form<T extends IForm> extends Component<T> {
   constructor(protected events: IEvents, container: HTMLElement) {
     super(container);
 
-    this.submitButton = ensureElement<HTMLButtonElement>('.button[type=submit]', this.container);
-    this.errorsContainer = ensureElement<HTMLSpanElement>('.form__errors', this.container);
+    this.submitButton = ensureElement<HTMLButtonElement>('.button[type=submit]', container);
+    this.errorsContainer = ensureElement<HTMLSpanElement>('.form__errors', container);
 
     this.container.addEventListener('input', (e: Event) => {
       const target = e.target as HTMLInputElement;
       if (target.name) {
-        this.events.emit('form:input', {
-          field: target.name,
-          value: target.value,
-        });
+        let value = target.value;
+        if (['address', 'email', 'phone'].includes(target.name)) {
+          value = value.trim();
+        }
+        this.events.emit('form:input', { field: target.name as TByuerFields, value });
       }
     });
 
@@ -43,7 +46,7 @@ export abstract class Form<T extends IForm> extends Component<T> {
   }
 
   set errors(errors: string[]) {
-    this.errorsContainer.textContent = errors.join(', ');
+    this.errorsContainer.textContent = errors.join('. ');
   }
 
   set valid(valid: boolean) {
@@ -54,6 +57,9 @@ export abstract class Form<T extends IForm> extends Component<T> {
     if (data) {
       if (data.errors) this.errors = data.errors;
       if (data.valid !== undefined) this.valid = data.valid;
+      if (data.fieldErrors) {
+        this.errors = Object.values(data.fieldErrors).filter(Boolean); 
+      }
     }
     return this.container;
   }

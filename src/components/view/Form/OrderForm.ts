@@ -5,10 +5,12 @@ import { Form, IForm } from "./Form";
 
 interface IOrderForm extends IForm {
   payment?: TPayment;
+  address?: string;
 }
 
 export class OrderForm extends Form<IOrderForm> {
   protected paymentButtons: HTMLButtonElement[];
+  protected addressInput: HTMLInputElement;
 
   constructor(events: IEvents, container: HTMLElement) {
     super(events, container);
@@ -17,12 +19,12 @@ export class OrderForm extends Form<IOrderForm> {
       ensureElement<HTMLButtonElement>('button[name="card"]', this.container),
       ensureElement<HTMLButtonElement>('button[name="cash"]', this.container),
     ];
+    this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]', this.container);
 
     this.paymentButtons.forEach(button => {
       button.addEventListener('click', () => {
-        this.events.emit('order:paymentChange', {
-          payment: button.name as TPayment,
-        });
+        this.payment = button.name as TPayment;
+        this.events.emit('order:paymentChange', { payment: button.name as TPayment });
       });
     });
   }
@@ -33,10 +35,15 @@ export class OrderForm extends Form<IOrderForm> {
     });
   }
 
+  set address(value: string) {
+    this.addressInput.value = value;
+  }
+
   render(data?: Partial<IOrderForm>): HTMLElement {
     if (data) {
       super.render(data);
-      if (data.payment) this.payment = data.payment;
+      if (data.payment !== undefined) this.payment = data.payment;
+      if (data.address !== undefined) this.address = data.address;
     }
     return this.container;
   }
