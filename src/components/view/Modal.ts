@@ -3,7 +3,8 @@ import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
 
 interface IContent {
-  data: HTMLElement;
+  content: HTMLElement;
+  isOpen: boolean;
 }
 
 export class Modal extends Component<IContent> {
@@ -14,7 +15,7 @@ export class Modal extends Component<IContent> {
     super(container);
     this.modalContent = ensureElement('.modal__content', this.container);
     this.closeButton = ensureElement('.modal__close', this.container) as HTMLButtonElement;
-    
+
     this.closeButton.addEventListener('click', () => {
       this.events.emit('modal:close');
     });
@@ -31,12 +32,5 @@ export class Modal extends Component<IContent> {
 
   set isOpen(value: boolean) {
     this.container.classList.toggle('modal_active', value);
-  }
-
-  render(data?: Partial<IContent>): HTMLElement {
-    if (data && data.data) {
-      this.content = data.data;
-    }
-    return this.container;
   }
 }
