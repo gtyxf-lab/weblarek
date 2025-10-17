@@ -1,12 +1,10 @@
-import { categoryMap } from "../../utils/constants";
-import { cloneTemplate, createElement, ensureElement } from "../../utils/utils";
+import { ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
-import { BasketCard, ICardInBasket } from "./Card/BasketCard";
 
 export interface IBasket {
   totalPrice: number;
-  items: ICardInBasket[];
+  items: HTMLElement[];
 }
 
 export class Basket extends Component<IBasket> {
@@ -33,11 +31,11 @@ export class Basket extends Component<IBasket> {
     this.confirmButton.disabled = disabled;
   }
 
-  set basketItems(items: ICardInBasket[]) {
+  set basketItems(items: HTMLElement[]) {
     this.basketItemsList.innerHTML = '';
     if (items.length === 0) {
-      const emptyText = createElement('p');
-      emptyText.textContent = 'Корзина пуста'
+      const emptyText = document.createElement('p');
+      emptyText.textContent = 'Корзина пуста';
       emptyText.style.opacity = '.3';
       this.basketItemsList.appendChild(emptyText);
       this.confirmButtonDisabled = true;
@@ -45,19 +43,8 @@ export class Basket extends Component<IBasket> {
     }
 
     this.confirmButtonDisabled = false;
-    items.forEach((item, index) => {
-      const cardElement = cloneTemplate<HTMLLIElement>('#card-basket');
-      const card = new BasketCard(this.events, cardElement, categoryMap);
-      card.render({ ...item, index: index + 1 });
-      this.basketItemsList.appendChild(cardElement);
+    items.forEach(item => {
+      this.basketItemsList.appendChild(item);
     });
-  }
-
-  render(data?: Partial<IBasket>): HTMLElement {
-    if (data) {
-      if (data.totalPrice != null) this.price = data.totalPrice;
-      if (data.items) this.basketItems = data.items;
-    }
-    return this.container;
   }
 }
