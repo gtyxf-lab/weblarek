@@ -1,6 +1,13 @@
 import { IBuyer, TByuerFields, TPayment } from "../../types";
 import { IEvents } from "../base/Events";
 
+interface IValidationResult {
+  payment?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+}
+
 export class Buyer {
   protected payment: TPayment = '' as TPayment;
   protected email: string = '';
@@ -41,31 +48,22 @@ export class Buyer {
     this.events.emit('buyer:updated', { field: null, buyerData: this.getInfo() });
   }
 
-  validate(): IBuyer {
-    const validateResult: IBuyer = {
-      payment: '' as TPayment,
-      email: '',
-      phone: '',
-      address: ''
-    };
-    const errorMessage: string = 'Поле должно быть заполнено';
+  validate(): IValidationResult {
+    const errors: IValidationResult = {};
 
     if (this.payment !== 'cash' && this.payment !== 'card') {
-      validateResult.payment = errorMessage as TPayment;
+      errors.payment = 'Выберите тип оплаты';
+    }
+    if (!this.address.trim()) {
+      errors.address = 'Поле адрес не заполнено';
+    }
+    if (!this.email.trim()) {
+      errors.email = 'Поле email не заполнено';
+    }
+    if (!this.phone.trim()) {
+      errors.phone = 'Поле телефон не заполнено';
     }
 
-    if (this.email === '') {
-      validateResult.email = errorMessage;
-    }
-
-    if (this.phone === '') {
-      validateResult.phone = errorMessage;
-    }
-
-    if (this.address === '') {
-      validateResult.address = errorMessage;
-    }
-
-    return validateResult;
+    return errors;
   }
 }

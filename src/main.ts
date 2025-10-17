@@ -3,7 +3,8 @@ import { EventEmitter } from './components/base/Events';
 import { Buyer } from './components/models/Buyer';
 import { Cart } from './components/models/Cart';
 import { ProductCatalog } from './components/models/ProductCatalog';
-import { Basket, IBasket } from './components/view/Basket';
+import { Basket } from './components/view/Basket';
+import { BasketCard } from './components/view/Card/BasketCard';
 import { CatalogCard } from './components/view/Card/CatalogCard';
 import { DetailedCard } from './components/view/Card/DetailedCard';
 import { ContactsForm } from './components/view/Form/ContactsForm';
@@ -15,7 +16,7 @@ import { Success } from './components/view/Success';
 import './scss/styles.scss';
 import { ShopApi } from './services/ShopApi';
 import { IApiProductList, IBuyer, IOrderData, IProduct, TByuerFields, TPayment } from './types';
-import { API_URL, categoryMap } from './utils/constants';
+import { API_URL } from './utils/constants';
 import { cloneTemplate } from './utils/utils';
 
 const baseApi = new Api(API_URL);
@@ -23,7 +24,8 @@ const shopApi = new ShopApi(baseApi);
 const events = new EventEmitter();
 
 const catalog = new ProductCatalog(events);
-const catalogElements: HTMLElement[] = [];
+const cart = new Cart(events);
+const buyer = new Buyer(events);
 
 const galleryElement = document.querySelector('.gallery') as HTMLElement;
 const gallery = new Gallery(events, galleryElement);
@@ -34,78 +36,63 @@ const modal = new Modal(events, modalElement);
 const headerElement = document.querySelector('.header') as HTMLElement;
 const header = new Header(events, headerElement);
 
-const cart = new Cart(events);
 const basketTemplate = cloneTemplate<HTMLElement>('#basket');
 const basket = new Basket(events, basketTemplate);
 
-const buyer = new Buyer(events);
+const orderTemplate = cloneTemplate<HTMLElement>('#order');
+const orderForm = new OrderForm(events, orderTemplate);
 
-let currentDetailedCard: DetailedCard | null;
+const contactsTemplate = cloneTemplate<HTMLElement>('#contacts');
+const contactsForm = new ContactsForm(events, contactsTemplate);
 
-let currentOrderForm: OrderForm | null = null;
-let currentContactsForm: ContactsForm | null = null;
 const successTemplate = cloneTemplate<HTMLElement>('#success');
 const success = new Success(events, successTemplate);
- 
+
 events.on('catalog:updated', (data: { products: IProduct[] }) => {
-  catalogElements.length = 0;
-
-  data.products.forEach(item => {
+  const catalogElements = data.products.map(item => {
     const cardElement = cloneTemplate<HTMLElement>('#card-catalog');
-    const catalogCard = new CatalogCard(events, cardElement, categoryMap);
-    catalogElements.push(catalogCard.render(item));
-  })
-
+    const catalogCard = new CatalogCard(events, cardElement);
+    return catalogCard.render(item);
+  });
   gallery.render({ catalog: catalogElements });
-})
+});
 
-events.on('catalog:select', (data: { id: string}) => {
+events.on('catalog:select', (data: { id: string }) => {
   const selectedItem = catalog.getProductById(data.id);
   if (selectedItem) {
     catalog.setDetailedProduct(selectedItem);
   }
-})
+});
 
-events.on('catalog:detailedUpdated', (data: { detailedProduct: IProduct}) => {
+events.on('catalog:detailedUpdated', (data: { detailedProduct: IProduct }) => {
   const detailedCardTemplate = cloneTemplate<HTMLElement>('#card-preview');
-  currentDetailedCard = new DetailedCard(events, detailedCardTemplate, categoryMap);
-  const cardContent = currentDetailedCard.render({
+  const detailedCard = new DetailedCard(events, detailedCardTemplate);
+  const cardContent = detailedCard.render({
     ...data.detailedProduct,
     addButtonText: data.detailedProduct.price === null
       ? 'Недоступно'
       : cart.checkItemInCartById(data.detailedProduct.id) ? 'Удалить из корзины' : 'В корзину',
     addButtonDisabled: data.detailedProduct.price === null
   });
-
-  
-  modal.render({data: cardContent});
-  modal.isOpen = true;
-})
+  modal.render({ content: cardContent, isOpen: true });
+});
 
 events.on('modal:close', () => {
   modal.isOpen = false;
-  currentDetailedCard = null;
-  currentOrderForm = null;
-  currentContactsForm = null;
-})
+});
 
 events.on('basket:open', () => {
-  const cartData: IBasket = {
-    totalPrice: cart.getCartItemsPrice(),
-    items: cart.getCartItems().map((item, index) => ({
-      id: item.id,
-      title: item.title,
-      category: item.category,
-      price: item.price,
-      image: item.image,
-      index: index + 1,
-    }))
-  }
-  basket.render(cartData);
+  const items = cart.getCartItems();
+  const total = cart.getCartItemsPrice();
+  const basketItems = items.map((item, index) => {
+    const cardElement = cloneTemplate<HTMLElement>('#card-basket');
+    const basketCard = new BasketCard(events, cardElement);
+    return basketCard.render({ id: item.id, title: item.title, price: item.price, index: index + 1 });
+  });
 
-  modal.render({ data: basket.render(cartData) });
-  modal.isOpen = true;
-})
+  basket.render({ items: basketItems, totalPrice: total });
+  modal.render({ content: basket.render(), isOpen: true });
+});
 
 events.on('basket:addCard', (data: { id: string }) => {
   const item = catalog.getProductById(data.id);
@@ -116,44 +103,29 @@ events.on('basket:addCard', (data: { id: string }) => {
   if (item.price === null) {
     return;
   }
-
-  const isInBasket = cart.checkItemInCartById(data.id)
+  const isInBasket = cart.checkItemInCartById(data.id);
   if (isInBasket) {
     cart.removeProductFromCart(data.id);
   } else {
     cart.addProductInCart(item);
   }
-
-
-  if (currentDetailedCard) {
-    currentDetailedCard.addButtonText = isInBasket ? 'В корзину' : 'Удалить из корзины';
-    currentDetailedCard.addButtonDisabled = false;
-  }
-
-  header.counter = cart.getCartItemsCount();
   modal.isOpen = false;
-})
+});
 
 events.on('basket:deleteCard', (data: { id: string }) => {
   cart.removeProductFromCart(data.id);
-})
+});
 
-events.on('cart:updated', (data: { items: IProduct[], total: number, count: number; }) => {
-  const cartData: IBasket = {
-    items: data.items.map((item, index) => ({
-      id: item.id,
-      title: item.title,
-      category: item.category,
-      price: item.price,
-      image: item.image,
-      index: index + 1
-    })),
-    totalPrice: data.total,
-  };
-
-  basket.render(cartData);
+events.on('cart:updated', (data: { items: IProduct[], total: number, count: number }) => {
   header.counter = data.count;
-})
+
+  const basketItems = data.items.map((item, index) => {
+    const cardElement = cloneTemplate<HTMLElement>('#card-basket')
+    const basketCard = new BasketCard(events, cardElement);
+    return basketCard.render({ id: item.id, title: item.title, price: item.price, index: index + 1 });
+  });
+  basket.render({ items: basketItems, totalPrice: data.total });
+});
 
 events.on('order:paymentChange', (data: { payment: TPayment }) => {
   buyer.setInfo('payment', data.payment);
@@ -163,78 +135,55 @@ events.on('form:input', (data: { field: TByuerFields; value: string }) => {
   buyer.setInfo(data.field, data.value);
 });
 
-events.on('form:submit', () => {
-  if (currentOrderForm) {
-    const validation = buyer.validateOrder();
-    if (!validation.valid) return;
-    const contactsTemplate = cloneTemplate<HTMLElement>('#contacts');
-    currentContactsForm = new ContactsForm(events, contactsTemplate);
-    const contactsVal = buyer.validateContacts();
-    const initialErrors = Object.values(contactsVal.errors).filter((e): e is string => Boolean(e));
-    const contactsRendered = currentContactsForm.render({
-      ...buyer.getInfo(),
-      valid: contactsVal.valid,
-      errors: initialErrors
-    });
-    modal.render({ data: contactsRendered });
-    currentOrderForm = null;
+events.on('order:submit', () => {
+  const validation = buyer.validate();
+  const errors = [validation.payment, validation.address].filter((e): e is string => Boolean(e));
+  const valid = errors.length === 0;
+  if (!valid) {
+    orderForm.render({ valid: false, errors });
     return;
   }
-
-  if (currentContactsForm) {
-    const contactsVal = buyer.validateContacts();
-    if (!contactsVal.valid) return;
-
-    const fullValidation = buyer.validate();
-    if (!fullValidation.valid) return;
-
-    const orderData: IOrderData = {
-      ...buyer.getInfo(),
-      total: cart.getCartItemsPrice(),
-      items: cart.getCartItems().map(item => item.id)
-    };
-    shopApi.submitOrder(orderData)
-      .then(() => {
-        success.total = orderData.total;
-        modal.render({ data: success.render() });
-        cart.clearCart();
-        buyer.clearInfo();
-        currentContactsForm = null;
-      })
-      .catch(error => console.error('Ошибка заказа:', error));
-    return;
-  }
+  modal.render({ content: contactsForm.render({ email: buyer.getInfo().email, phone: buyer.getInfo().phone, valid: true, errors: [] }), isOpen: true });
 });
 
-events.on('buyer:updated', (buyerData: IBuyer) => {
-  if (currentOrderForm) {
-    const validation = buyer.validateOrder();
-    currentOrderForm.render({
-      ...buyerData,
-      valid: validation.valid,
-      errors: validation.errors 
-    });
-  } else if (currentContactsForm) {
-    const validation = buyer.validateContacts();
-    const errors: string[] = Object.values(validation.errors).filter((e): e is string => Boolean(e));
-    currentContactsForm.render({
-      ...buyerData,
-      valid: validation.valid,
-      errors
-    });
+events.on('contacts:submit', () => {
+  const validation = buyer.validate();
+  const errors = [validation.email, validation.phone].filter((e): e is string => Boolean(e));
+  const valid = errors.length === 0;
+  if (!valid) {
+    contactsForm.render({ valid: false, errors });
+    return;
+  }
+  const orderData: IOrderData = {
+    ...buyer.getInfo(),
+    total: cart.getCartItemsPrice(),
+    items: cart.getCartItems().map(item => item.id)
+  };
+  shopApi.submitOrder(orderData)
+    .then(() => {
+      success.total = orderData.total;
+      modal.render({ content: success.render(), isOpen: true });
+      cart.clearCart();
+      buyer.clearInfo();
+    })
+    .catch(error => console.error('Ошибка заказа:', error));
+});
+
+events.on('buyer:updated', (data: { field: TByuerFields | null, buyerData: IBuyer }) => {
+  const validation = buyer.validate();
+  if (data.field === 'payment' || data.field === 'address') {
+    const errors = [validation.payment, validation.address].filter((e): e is string => Boolean(e));
+    orderForm.render({ ...buyer.getInfo(), valid: errors.length === 0, errors });
+  } else if (data.field === 'email' || data.field === 'phone') {
+    const errors = [validation.email, validation.phone].filter((e): e is string => Boolean(e));
+    contactsForm.render({ ...buyer.getInfo(), valid: errors.length === 0, errors });
   }
 });
 
 events.on('basket:confirm', () => {
-  const orderTemplate = cloneTemplate<HTMLElement>('#order');
-  currentOrderForm = new OrderForm(events, orderTemplate);
-  const orderRendered = currentOrderForm.render({
-    ...buyer.getInfo(),
-    ...buyer.validateOrder()
-  });
-  modal.render({ data: orderRendered });
-  modal.isOpen = true;
-  currentContactsForm = null;
+  const validation = buyer.validate();
+  const errors = [validation.payment, validation.address].filter((e): e is string => Boolean(e));
+  modal.render({ content: orderForm.render({ ...buyer.getInfo(), valid: errors.length === 0, errors }), isOpen: true });
 });
 
 events.on('success:confirm', () => {
@@ -244,9 +193,7 @@ events.on('success:confirm', () => {
 shopApi.getProductList()
   .then((response: IApiProductList) => {
     if (!Array.isArray(response.items)) {
-      throw new Error('API вернул некорректные данные')
+      throw new Error('API вернул некорректные данные');
     }
     catalog.setProductCatalog(response.items);
-
-    console.log('Каталог товаров из API:', catalog.getProductCatalog());
-  })
+  });

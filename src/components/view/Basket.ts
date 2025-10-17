@@ -23,7 +23,7 @@ export class Basket extends Component<IBasket> {
     });
   }
 
-  set price(value: number) {
+  set totalPrice(value: number) {
     this.priceElement.textContent = `${value} синапсов`;
   }
 
@@ -31,7 +31,8 @@ export class Basket extends Component<IBasket> {
     this.confirmButton.disabled = disabled;
   }
 
-  set basketItems(items: HTMLElement[]) {
+  set items(items: HTMLElement[]) {
+    console.log('Setting basketItems:', items);
     this.basketItemsList.innerHTML = '';
     if (items.length === 0) {
       const emptyText = document.createElement('p');
@@ -39,6 +40,7 @@ export class Basket extends Component<IBasket> {
       emptyText.style.opacity = '.3';
       this.basketItemsList.appendChild(emptyText);
       this.confirmButtonDisabled = true;
+      this.totalPrice = 0;
       return;
     }
 

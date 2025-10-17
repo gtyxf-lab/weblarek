@@ -20,6 +20,8 @@ export abstract class Form<T extends IForm> extends Component<T> {
     this.errorsContainer = ensureElement<HTMLSpanElement>('.form__errors', container);
     this.formName = this.container.getAttribute('name') || 'form';
 
+    this.container.setAttribute('novalidate', 'true');
+
     this.container.addEventListener('input', (e: Event) => {
       const target = e.target as HTMLInputElement;
       if (target.name) {

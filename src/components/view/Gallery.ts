@@ -18,9 +18,4 @@ export class Gallery extends Component<IGallery> {
     this.catalogElement.innerHTML = '';
     items.forEach(item => this.catalogElement.appendChild(item));
   }
-
-  render(data?: Partial<IGallery>): HTMLElement {
-    if (data && data.catalog) this.catalog = data.catalog;
-    return this.container;
-  }
 }

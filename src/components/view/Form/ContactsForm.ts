@@ -25,13 +25,4 @@ export class ContactsForm extends Form<IContactsForm> {
   set phone(value: string) {
     this.phoneInput.value = value;
   }
-
-  render(data?: Partial<IContactsForm>): HTMLElement {
-    if (data) {
-      if (data.email) this.email = data.email;
-      if (data.phone) this.phone = data.phone;
-      super.render(data);
-    }
-    return this.container;
-  }
 }
