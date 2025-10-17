@@ -2,25 +2,26 @@ import { IBuyer, TByuerFields, TPayment } from "../../types";
 import { IEvents } from "../base/Events";
 
 export class Buyer {
-  protected payment: TPayment = 'card';
+  protected payment: TPayment = '' as TPayment;
   protected email: string = '';
   protected phone: string = '';
   protected address: string = '';
 
   constructor(protected events: IEvents, buyerInfo: Partial<IBuyer> = {}) {
-    this.setInfo('payment', buyerInfo.payment || 'card');
+    this.setInfo('payment', buyerInfo.payment || '' as TPayment);
     this.setInfo('address', buyerInfo.address || '');
     this.setInfo('email', buyerInfo.email || '');
     this.setInfo('phone', buyerInfo.phone || '');
   }
 
   setInfo(field: TByuerFields, value: string | TPayment): void {
-    if (field === 'payment') {
-      this.payment = value as TPayment;
-    } else {
-      (this as any)[field] = value.toString().trim();
+    if (field === 'payment' && (value === 'card' || value === 'cash')) {
+      this.payment = value;
+      this.events.emit('buyer:updated', { field, buyerData: this.getInfo() });
+    } else if (field !== 'payment') {
+      this[field] = value as string;
+      this.events.emit('buyer:updated', { field, buyerData: this.getInfo() });
     }
-    this.events.emit('buyer:updated', this.getInfo());
   }
 
   getInfo(): IBuyer {
@@ -33,53 +34,38 @@ export class Buyer {
   }
 
   clearInfo(): void {
-    this.setInfo('payment', 'card');
-    this.setInfo('address', '');
-    this.setInfo('email', '');
-    this.setInfo('phone', '');
+    this.payment = '' as TPayment;
+    this.email = '';
+    this.phone = '';
+    this.address = '';
+    this.events.emit('buyer:updated', { field: null, buyerData: this.getInfo() });
   }
 
-  validateOrder(): { valid: boolean; errors: string[] } {
-    const hasPayment = ['card', 'cash'].includes(this.payment);
-    const hasAddress = !!this.address;
-    const valid = hasPayment && hasAddress;
-    return {
-      valid,
-      errors: valid ? [] : ["Не все поля заполнены"]
+  validate(): IBuyer {
+    const validateResult: IBuyer = {
+      payment: '' as TPayment,
+      email: '',
+      phone: '',
+      address: ''
     };
-  }
+    const errorMessage: string = 'Поле должно быть заполнено';
 
-  validateContacts(): { 
-    valid: boolean; 
-    errors: Partial<Record<'email' | 'phone', string>> 
-  } {
-    const errors: Partial<Record<'email' | 'phone', string>> = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?\d{10,12}$/;
-
-    if (!this.email) {
-      errors.email = 'Поле email должно быть заполнено';
-    } else if (!emailRegex.test(this.email)) {
-      errors.email = 'Некорректный email';
+    if (this.payment !== 'cash' && this.payment !== 'card') {
+      validateResult.payment = errorMessage as TPayment;
     }
 
-    if (!this.phone) {
-      errors.phone = 'Поле телефон должно быть заполнено';
-    } else if (!phoneRegex.test(this.phone)) {
-      errors.phone = 'Некорректный телефон';
+    if (this.email === '') {
+      validateResult.email = errorMessage;
     }
 
-    const valid = Object.keys(errors).length === 0;
-    return { valid, errors };
-  }
+    if (this.phone === '') {
+      validateResult.phone = errorMessage;
+    }
 
-  validate(): { valid: boolean; errors: string[] } {
-    const orderVal = this.validateOrder();
-    const contactsVal = this.validateContacts();
-    const fullValid = orderVal.valid && contactsVal.valid;
-    return {
-      valid: fullValid,
-      errors: fullValid ? [] : ["Не все поля заполнены"]
-    };
+    if (this.address === '') {
+      validateResult.address = errorMessage;
+    }
+
+    return validateResult;
   }
 }
